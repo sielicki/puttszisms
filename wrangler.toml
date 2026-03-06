@@ -1,0 +1,8 @@
+name = "puttszisms"
+main = "src/index.ts"
+compatibility_date = "2025-03-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "puttszisms-db"
+database_id = "5b285f0a-e6e4-414b-93d7-3bd6766b3a9a"

@@ -1,0 +1,79 @@
+* puttszisms
+
+a private quote collection app for immortalizing quotes with
+friends. Members authenticate via discord and must belong to a common
+server (set at deploy time) to view or contribute quotes. users can
+submit quotes, rate them, leave comments.
+
+Built with hono on cloudflare workers with d1 for storage. deployment
+is handled by cloudflare workers builds (connected to the repo);
+github actions only run lint/type checks.
+
+** setup from scratch
+
+*** prerequisites
+
+- a [[https://dash.cloudflare.com][cloudflare account]]
+- a [[https://discord.com/developers/applications][discord application]] with oauth2 redirect uri set to =https://<your-domain>/callback=
+- [[https://nixos.org/download][nix]] (provides bun, wrangler, biome, typescript via the dev shell) or install those tools manually
+
+*** 1. discord application
+
+1. go to [[https://discord.com/developers/applications][discord developer portal]] and create a new application
+2. under *OAuth2*, add a redirect uri: =https://<your-domain>/callback=
+3. note the *Client ID* and *Client Secret*
+4. get your discord server's *Guild ID* (right-click server name → copy server id, with developer mode enabled)
+
+*** 2. cloudflare resources
+
+#+begin_src sh
+# enter the dev shell (provides wrangler, bun, etc.)
+nix develop
+
+# install js dependencies
+bun install
+
+# create the d1 database, assumes you have credentials setup already.
+wrangler d1 create puttszisms-db
+#+end_src
+
+copy the returned =database_id= into =wrangler.toml=, replacing the =REPLACE_ME= placeholder.
+
+#+begin_src sh
+# run the schema migration on the remote database
+wrangler d1 execute puttszisms-db --file=schema.sql --remote
+
+# set worker secrets
+wrangler secret put DISCORD_CLIENT_ID
+wrangler secret put DISCORD_CLIENT_SECRET
+wrangler secret put DISCORD_GUILD_ID
+wrangler secret put JWT_SECRET          # generate with: openssl rand -hex 32
+#+end_src
+
+optionally configure a custom domain in the cloudflare dashboard under *Workers & Pages → puttszisms → Settings → Domains & Routes*.
+
+*** 3. cloudflare workers builds (deployment)
+
+in the cloudflare dashboard, go to *Workers & Pages → puttszisms → Settings → Builds* and connect the github repo. cloudflare will automatically deploy on push to =master=.
+
+set the build command to =bun install --frozen-lockfile && bun run deploy= and the deploy command to =wrangler deploy=.
+
+*** 4. local development
+
+#+begin_src sh
+nix develop          # enter dev shell (or install bun/wrangler/biome/tsc manually)
+bun install          # install dependencies
+
+# create .dev.vars with your discord credentials (auto-created by the dev shell)
+# then fill in the values:
+#   DISCORD_CLIENT_ID=...
+#   DISCORD_CLIENT_SECRET=...
+#   DISCORD_GUILD_ID=...
+#   JWT_SECRET=changeme
+
+# init local d1 and start dev server
+wrangler d1 execute puttszisms-db --local --file=schema.sql
+wrangler dev
+#+end_src
+
+the local oauth callback uri should be =http://localhost:8787/callback= — add this to your discord application's redirect uris for local testing.
