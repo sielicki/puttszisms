@@ -56,7 +56,7 @@ optionally configure a custom domain in the cloudflare dashboard under *Workers 
 
 in the cloudflare dashboard, go to *Workers & Pages → puttszisms → Settings → Builds* and connect the github repo. cloudflare will automatically deploy on push to =master=.
 
-set the build command to =bun install --frozen-lockfile && bun run deploy= and the deploy command to =wrangler deploy=.
+set the build command to =bun install --frozen-lockfile && npx wrangler d1 execute puttszisms-db --file=schema.sql --remote=. cloudflare handles running =wrangler deploy= automatically after the build succeeds.
 
 *** 4. local development
 
