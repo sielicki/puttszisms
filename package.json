@@ -10,7 +10,7 @@
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "check": "tsc --noEmit && biome check src/",
-    "postinstall": "bun2nix -o bun.nix"
+    "postinstall": "command -v bun2nix >/dev/null && bun2nix -o bun.nix || true"
   },
   "dependencies": {
     "hono": "^4.7.0"
